@@ -23,7 +23,7 @@ install( TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib )
 
 # -------------------------------------------------
 # main executable
-dqm4hep_add_main_executables( EXCEPT dqm4hep-ws-server )
+dqm4hep_add_main_executables()
 
 # -------------------------------------------------
 # clang tidy and format rules
