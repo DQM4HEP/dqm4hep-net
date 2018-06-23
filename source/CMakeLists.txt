@@ -8,7 +8,10 @@ add_subdirectory( dim )
 
 # include directories
 include_directories( SYSTEM dim/include )
+include_directories( SYSTEM asio )
+include_directories( SYSTEM websocketpp )
 include_directories( BEFORE include )
+add_definitions( -DASIO_STANDALONE )
 dqm4hep_set_cxx_flags()
 
 # -------------------------------------------------
@@ -27,19 +30,4 @@ dqm4hep_add_main_executables( EXCEPT dqm4hep-ws-server )
 dqm4hep_run_clang_tidy()
 dqm4hep_run_clang_format()
 
-# -------------------------------------------------
-# web socket bridge process
-if( DQMNET_WEBSOCKETS )
-  dqm4hep_add_executable( main dqm4hep-ws-server bin )
-  target_link_libraries( dqm4hep-ws-server ${Boost_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
-else()
-  set( EXCLUDE_INSTALL ${EXCLUDE_INSTALL} "include/dqm4hep/ws" )
-endif()
-
-# -------------------------------------------------
-# install includes
-if( EXCLUDE_INSTALL )
-  install_directory( include DESTINATION . FILES_MATCHING PATTERN "*.h" PATTERN ${EXCLUDE_INSTALL} EXCLUDE )
-else()
-  install_directory( include DESTINATION . FILES_MATCHING PATTERN "*.h" )
-endif()
+install_directory( include DESTINATION . FILES_MATCHING PATTERN "*.h" )
