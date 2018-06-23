@@ -119,18 +119,26 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     WsServer::~WsServer() {
-      
+      stop();
+      for(auto &svc : m_serviceMap) {
+        delete svc.second;
+      }
+      m_serviceConnections.clear();
+      m_serviceMap.clear();
     }
     
     //-------------------------------------------------------------------------------------------------
     
     void WsServer::setPort(int port) {
-      m_port = port;
+      if(not m_running) {
+        m_port = port;        
+      }
     }
     
     //-------------------------------------------------------------------------------------------------
     
     WsService *WsServer::createService(const std::string &name) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       auto findIter = m_serviceMap.find(name);
       if(findIter != m_serviceMap.end()) {
         dqm_error("Couldn't create service '{0}' twice", name);
@@ -145,6 +153,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     WsCommandHandler *WsServer::createCommandHandler(const std::string &name) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       auto findIter = m_serviceMap.find(name);
       if(findIter != m_serviceMap.end()) {
         dqm_error("Couldn't create service '{0}' twice", name);
@@ -158,6 +167,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     WsRequestHandler *WsServer::createRequestHandler(const std::string &name) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       auto findIter = m_serviceMap.find(name);
       if(findIter != m_serviceMap.end()) {
         dqm_error("Couldn't create service '{0}' twice", name);
@@ -171,6 +181,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     WsService *WsServer::findService(const std::string &name) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       auto findIter = m_serviceMap.find(name);
       if(findIter == m_serviceMap.end()) {
         return nullptr;
@@ -184,6 +195,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     WsCommandHandler *WsServer::findCommandHandler(const std::string &name) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       auto findIter = m_serviceMap.find(name);
       if(findIter == m_serviceMap.end()) {
         return nullptr;
@@ -197,6 +209,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     WsRequestHandler *WsServer::findRequestHandler(const std::string &name) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       auto findIter = m_serviceMap.find(name);
       if(findIter == m_serviceMap.end()) {
         return nullptr;
@@ -211,8 +224,7 @@ namespace dqm4hep {
     
     void WsServer::start() {        
       // Set logging settings
-      m_server.set_access_channels(websocketpp::log::alevel::all);
-      m_server.clear_access_channels(websocketpp::log::alevel::frame_payload);
+      m_server.set_access_channels(websocketpp::log::alevel::none);
 
       // Initialize Asio
       m_server.init_asio();
@@ -230,13 +242,19 @@ namespace dqm4hep {
 
       // Start the ASIO io_service run loop
       m_thread = std::thread(&server::run, std::ref(m_server));
+      m_running = true;
     }
     
     //-------------------------------------------------------------------------------------------------
 
     void WsServer::stop() {
-      m_server.stop();
-      m_thread.join();
+      if(m_running) {
+        // std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        m_server.stop();
+        m_thread.join();
+        m_serviceConnections.clear();
+        m_running = false; 
+      }
     }
     
     //-------------------------------------------------------------------------------------------------
@@ -248,10 +266,13 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     void WsServer::onClose(connection_hdl hdl) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       server::connection_ptr con = m_server.get_con_from_hdl(hdl);
       const std::string serviceName = con->get_resource();
       auto findIter = m_serviceMap.find(serviceName);
-      
+      if(m_serviceMap.end() == findIter) {
+        return;
+      }
       // remove service subscriber (if subscribed)
       if(findIter->second->type() == SERVICE_TYPE) {
         auto findIter2 = m_serviceConnections.find(serviceName);
@@ -265,6 +286,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     void WsServer::onMessage(connection_hdl hdl, message_ptr msg) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       server::connection_ptr con = m_server.get_con_from_hdl(hdl);
       const std::string serviceName = con->get_resource();
       auto findIter = m_serviceMap.find(serviceName);
@@ -292,6 +314,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     void WsServer::send(WsService *service, const char *buffer, size_t size, bool containsBinary) {
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       auto findIter = m_serviceConnections.find(service->name());
       if(findIter == m_serviceConnections.end()) {
         return;
@@ -357,6 +380,7 @@ namespace dqm4hep {
       server::connection_ptr con = m_server.get_con_from_hdl(hdl);
       message_ptr responseMsg = con->get_message(websocketpp::frame::opcode::text, 0);
       request->onRequest().emit(con, msg, responseMsg);
+      m_server.send(con, responseMsg);
     }
     
   }
