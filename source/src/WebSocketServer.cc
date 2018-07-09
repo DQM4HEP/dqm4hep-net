@@ -130,7 +130,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
     
     void WsServer::setPort(int port) {
-      if(not m_running) {
+      if(not m_running.load()) {
         m_port = port;        
       }
     }
@@ -222,7 +222,10 @@ namespace dqm4hep {
     
     //-------------------------------------------------------------------------------------------------
     
-    void WsServer::start() {        
+    void WsServer::start() {
+      if(m_running.load()) {
+        return;
+      }   
       // Set logging settings
       m_server.set_access_channels(websocketpp::log::alevel::none);
 
@@ -248,7 +251,7 @@ namespace dqm4hep {
     //-------------------------------------------------------------------------------------------------
 
     void WsServer::stop() {
-      if(m_running) {
+      if(m_running.load()) {
         // std::lock_guard<std::recursive_mutex> lock(m_mutex);
         m_server.stop();
         m_thread.join();
