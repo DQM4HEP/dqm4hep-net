@@ -376,7 +376,7 @@ namespace dqm4hep {
       /// The map of all services (services, command and request handlers)
       ServiceMap                 m_serviceMap = {};
       /// Whether the server is running
-      bool                       m_running = {false};
+      std::atomic_bool           m_running = {false};
       /// The mutex to synchronize operations
       std::recursive_mutex       m_mutex = {};
     };
