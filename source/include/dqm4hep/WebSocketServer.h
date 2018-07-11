@@ -25,8 +25,8 @@
  * @copyright CNRS , IPNL
  */
 
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef DQM4HEP_WEBSOCKETSERVER_H
+#define DQM4HEP_WEBSOCKETSERVER_H
 
 // -- dqm4hep headers
 #include <dqm4hep/Internal.h>
@@ -409,4 +409,4 @@ namespace dqm4hep {
   
 }
 
-#endif //  SERVER_H
+#endif //  DQM4HEP_WEBSOCKETSERVER_H
