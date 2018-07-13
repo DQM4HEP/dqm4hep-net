@@ -34,4 +34,5 @@ dqm4hep_run_clang_format()
 install_directory( include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 install_directory( asio/asio DESTINATION include )
 install_directory( websocketpp/websocketpp DESTINATION include )
+install( FILES asio/asio.hpp DESTINATION include )
 
