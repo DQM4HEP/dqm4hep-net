@@ -19,21 +19,25 @@ set( DIM_CFLAGS "" )
 set( DIM_LIBFLAGS "-lpthread" )
 set( DIM_EXCFLAGS "" )
 set( DIM_ARCH "Linux" ) # default arch
+set( DIM_EXPORT_DEFINITIONS )
 
 # FIXME Do we really need this ???
 if( DIM_32BIT )
   set( DIM_CFLAGS "${DIM_CFLAGS} -m32" )
   set( DIM_LIBFLAGS "${DIM_LIBFLAGS} -m32" )
   set( DIM_EXCFLAGS "${DIM_EXCFLAGS} -m32" )
+  set( DIM_EXPORT_DEFINITIONS ${DIM_EXPORT_DEFINITIONS} -m32 )
 endif()
 
 if( UNIX )
   if(NOT APPLE) # linux case
     set( DIM_CFLAGS "${DIM_CFLAGS} -Wall -Wextra -DMIPSEL -DPROTOCOL=1 -Dunix -Dlinux -fPIC" )
     set( DIM_EXCFLAGS "${DIM_EXCFLAGS} -Wall -Wextra" )
+    set( DIM_EXPORT_DEFINITIONS ${DIM_EXPORT_DEFINITIONS} -DMIPSEL -DPROTOCOL=1 -Dunix -Dlinux )
   else() # MACOSX case
     set( DIM_ARCH "Darwin" )
     set( DIM_CFLAGS "${DIM_CFLAGS} -DMIPSEL -DPROTOCOL=1 -Dunix -Ddarwin -fPIC" )
+    set( DIM_EXPORT_DEFINITIONS ${DIM_EXPORT_DEFINITIONS} -DMIPSEL -DPROTOCOL=1 -Dunix -Ddarwin )
   endif()
 else()
   message( SEND_ERROR "UNIX platform only ! Consider buying a decent OS please ..." )
@@ -211,5 +215,7 @@ if( DIM_GUI )
     RUNTIME DESTINATION bin/WebDID
   )
 endif()
+
+set( ${PROJECT_NAME}_DEFINITIONS ${${PROJECT_NAME}_DEFINITIONS} ${DIM_EXPORT_DEFINITIONS} CACHE STRING "" FORCE )
 
 #
