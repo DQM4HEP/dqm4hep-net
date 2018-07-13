@@ -11,7 +11,7 @@ include_directories( SYSTEM dim/include )
 include_directories( SYSTEM asio )
 include_directories( SYSTEM websocketpp )
 include_directories( BEFORE include )
-set( ${PROJECT_NAME}_DEFINITIONS -DASIO_STANDALONE CACHE STRING "" FORCE )
+set( ${PROJECT_NAME}_DEFINITIONS ${${PROJECT_NAME}_DEFINITIONS} -DASIO_STANDALONE CACHE STRING "" FORCE )
 add_definitions( ${${PROJECT_NAME}_DEFINITIONS} )
 dqm4hep_set_cxx_flags()
 
