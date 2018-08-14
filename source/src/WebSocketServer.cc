@@ -237,7 +237,7 @@ namespace dqm4hep {
       m_server.set_open_handler(std::bind(&WsServer::onOpen, this, _1));
       m_server.set_close_handler(std::bind(&WsServer::onClose, this, _1));
 
-      // Listen on port 9002
+      // Start listening
       m_server.listen(m_port);
 
       // Start the server accept loop
